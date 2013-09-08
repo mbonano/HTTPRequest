@@ -1,6 +1,6 @@
 /*
- HTTPRequest v0.1.3
- https://github.com/keverw/HTTPRequest
+ HTTPRequest v0.1.5
+ https://github.com/mbonano/HTTPRequest
  */
 
 var HTTPRequest = {
@@ -77,14 +77,29 @@ var HTTPRequest = {
             parameters.method = 'GET';
         }
 
-        //CONTENT TYPE
+        if (typeof parameters.requesttype === 'string') {
+            parameters.requesttype = parameters.datatype.toLowerCase();
+
+            // todo: add formdata?
+            var valid_types = ['json', 'urlencoded'];
+
+            if (valid_types.indexOf(parameters.requesttype) === -1)
+            {
+                throw ('Invalid requestType option');
+            }
+        }
+        else {
+            parameters.requesttype = 'urlencoded';
+        }
+
+        //Response content type
         if (typeof parameters.datatype === 'string')
         {
             parameters.datatype = parameters.datatype.toLowerCase();
 
-            var vaild_types = ['json'];
+            var valid_types = ['json'];
 
-            if (vaild_types.indexOf(parameters.datatype) === -1)
+            if (valid_types.indexOf(parameters.datatype) === -1)
             {
                 throw ('Invalid datatype option');
             }
@@ -97,7 +112,7 @@ var HTTPRequest = {
         //data
         if (typeof parameters.data !== 'undefined')
         {
-            parameters.data = this._objToQuery(parameters.data);
+            parameters.data = parameters.requesttype === 'json' ? this._objToJsonString(parameters.data) : this._objToQuery(parameters.data);
         }
 
         if (typeof parameters.query !== 'undefined')
@@ -264,7 +279,7 @@ var HTTPRequest = {
     {
         try
         {
-            if (typeof exports === 'object' && exports) //This is a module, use native JSON parser
+            if (typeof exports === 'object' && exports) //This is a module (Node), use native JSON parser
             {
                 return JSON.parse(data);
             }
@@ -297,7 +312,29 @@ var HTTPRequest = {
             return null;
         }
     },
+    JSONStringify: function (data) {
+        try {
+            if (typeof exports === 'object' && exports) //This is a module (Node), use native JSON parser
+            {
+                return JSON.stringify(data);
+            }
+            else //web browser
+            {
+                // Attempt to stringify using the native JSON stringifier first
+                if (window.JSON && window.JSON.stringify)
+                {
+                    return window.JSON.stringify(data);
+                }
 
+                // todo: steal an impl?
+                return null;
+            }
+        }
+        catch (e)
+        {
+            return null;
+        }
+    },
     base64encode : function (input) {
         var output = "";
         var chr1, chr2, chr3, enc1, enc2, enc3, enc4;
@@ -483,6 +520,7 @@ var HTTPRequest = {
             };
 
             xhr.open(parameters.method, url, true);
+            // is this really the best way to check for Node???
             if (typeof exports === 'object' && exports)
             {
                 xhr.disableHeaderCheck(true); //Disable header check
@@ -491,6 +529,7 @@ var HTTPRequest = {
                     xhr.setRequestHeader('User-Agent', parameters.useragent);
                 }
 
+                // why is this only allowed in Node? :(
                 if (typeof parameters.headers === 'object')
                 {
                     for (var key in parameters.headers)
@@ -505,7 +544,7 @@ var HTTPRequest = {
 
             if (parameters.method === 'POST' || parameters.method === 'PUT')
             {
-                xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+                xhr.setRequestHeader("Content-Type", parameters.requesttype === 'json' ? "application/json" : "application/x-www-form-urlencoded");
             }
 
             if (typeof parameters.beforesend == 'function') {
@@ -561,6 +600,14 @@ var HTTPRequest = {
         else
         {
             return obj;
+        }
+    },
+    _objToJsonString: function (obj) {
+        // there's no good way to tell if an object is already stringified
+        if (typeof obj === 'string' && /^[[{]/.test(obj)) {
+            return obj;
+        } else {
+            return this.JSONStringify(obj);
         }
     },
     _headersToHeaders: function (headers_str)
