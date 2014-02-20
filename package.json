@@ -1,11 +1,11 @@
 {
-  "author": "Kevin Whitman (https://github.com/keverw)",
-  "name": "HTTPRequest",
-  "description": "A simple yet powerful HTTP request library inspired by jQuery and LSL.",
+  "author": "Mark Bonano <mbonano@smartpathlabs.com> (http://smartpathlabs.com/)",
+  "name": "httpproxy",
+  "description": "A port of Kevin Whitman's (https://github.com/keverw) HTTPRequest with various additions and fixes.",
   "version": "0.1.5",
   "repository": {
     "type": "git",
-    "url": "https://github.com/mbonano/HTTPRequest"
+    "url": "https://github.com/mbonano/HTTPRequest.git"
   },
   "main": "HTTPRequest.js",
   "dependencies": {
